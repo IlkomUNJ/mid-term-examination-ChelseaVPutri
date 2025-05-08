@@ -1,5 +1,8 @@
 use std::cell::{Ref, RefCell};
+use std::io::IsTerminal;
+use std::ops::BitOrAssign;
 use std::rc::{Rc, Weak};
+use std::vec;
 
 pub type BstNodeLink = Rc<RefCell<BstNode>>;
 pub type WeakBstNodeLink = Weak<RefCell<BstNode>>;
@@ -60,6 +63,21 @@ impl BstNode {
     pub fn add_right_child(&mut self, current_node_link: &BstNodeLink, value: i32) {
         let new_node = BstNode::new_with_parent(current_node_link, value);
         self.right = Some(new_node);
+    }
+
+    // to do add_node function
+    pub fn add_node(&self, target_node: &BstNodeLink, value: i32) -> bool {
+        let mut node = self.clone();
+
+        if self.left.is_none() {
+            node.add_left_child(target_node, value);
+        }
+
+        if self.right.is_none() {
+            node.add_right_child(target_node, value);
+        }
+
+        true
     }
 
     /**change node u, with node v via parent swap
@@ -170,6 +188,17 @@ impl BstNode {
         self.get_bst_nodelink_copy()
     }
 
+    // to do median function
+    pub fn median(&self) -> BstNodeLink {
+        let mut vector: Vec<Rc<RefCell<BstNode>>> = vec![];
+        while self.key.is_some() {
+            if let Some(left_node) = &self.left {
+                vector.push(left_node.borrow().minimum());
+            }
+        }
+        self.get_bst_nodelink_copy()
+    }
+
     /**
      * Return the root of a node, return self if not exist
      */
@@ -211,6 +240,26 @@ impl BstNode {
 
             None
         }
+    }
+
+    // to do tree_predecessor function
+    pub fn tree_predecessor(node: &BstNodeLink) -> Option<BstNodeLink> {
+        if let Some(left_node) = &node.borrow().left {
+            return Some(left_node.borrow().maximum());
+        } else {
+            let mut node = node;
+            let mut temp = BstNode::upgrade_weak_to_strong(node.borrow().parent.clone());
+
+            while let Some(ref exist) = temp {
+                if let Some(ref left_child) = exist.borrow().left {
+                    if BstNode::is_node_match(left_child, node) {
+                        return Some(exist.clone());
+                    }
+                }
+            }
+        }
+
+        None
     }
 
     /**
